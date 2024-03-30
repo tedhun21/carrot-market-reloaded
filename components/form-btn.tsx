@@ -8,7 +8,7 @@ interface FomrButtonProps {
 
 export default function FormButton({ text }: FomrButtonProps) {
   const { pending } = useFormStatus();
-  console.log(pending);
+
   return (
     <button
       disabled={pending}
