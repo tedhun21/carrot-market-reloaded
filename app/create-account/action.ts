@@ -1,14 +1,14 @@
 "use server";
+import {
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_REGEX,
+  PASSWORD_REGEX_ERROR,
+} from "@/lib/constans";
 import { z } from "zod";
 
 function checkUsername(username: string) {
   return username.includes("potato") ? false : true;
 }
-
-// At least one uppercase letter, one lowercase letter, one number and one special character
-const passwordRegex = new RegExp(
-  /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).+$/,
-);
 
 function checkPasswords({
   password,
@@ -26,8 +26,6 @@ const formSchema = z
         invalid_type_error: "Username must be a string!",
         required_error: "Where is the username?",
       })
-      .min(3, "Way too short!!!")
-      .max(10, "That is too loooooong")
       .toLowerCase()
       .trim()
       .transform((username) => `🔥 ${username} 🔥`)
@@ -35,11 +33,8 @@ const formSchema = z
     email: z.string().email().toLowerCase(),
     password: z
       .string()
-      .min(10)
-      .regex(
-        passwordRegex,
-        "A paasword mush have lowercase, UPPERCASE, a number and special characters.",
-      ),
+      .min(PASSWORD_MIN_LENGTH)
+      .regex(PASSWORD_REGEX, PASSWORD_REGEX_ERROR),
     confirm_password: z.string().min(10),
   })
   .refine(checkPasswords, {

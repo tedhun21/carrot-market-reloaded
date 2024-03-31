@@ -10,7 +10,6 @@ export default function Input({
   errors = [],
   ...rest
 }: FomrInputProps & InputHTMLAttributes<HTMLInputElement>) {
-  console.log({ ...rest });
   return (
     <div>
       <input
