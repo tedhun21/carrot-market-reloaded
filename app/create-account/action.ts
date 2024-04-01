@@ -4,10 +4,29 @@ import {
   PASSWORD_REGEX,
   PASSWORD_REGEX_ERROR,
 } from "@/lib/constans";
+import db from "@/lib/db";
 import { z } from "zod";
 
 function checkUsername(username: string) {
   return username.includes("potato") ? false : true;
+}
+
+async function checkUniqueUsername(username: string) {
+  //check if username is taken
+  const user = await db.user.findUnique({
+    where: { username },
+    select: {
+      id: true,
+    },
+  });
+  return !Boolean(user);
+}
+async function checkUniqueEmail(email: string) {
+  const user = await db.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+  return !Boolean(user);
 }
 
 function checkPasswords({
@@ -28,9 +47,17 @@ const formSchema = z
       })
       .toLowerCase()
       .trim()
-      .transform((username) => `🔥 ${username} 🔥`)
-      .refine(checkUsername, "No potatoes allowed!"),
-    email: z.string().email().toLowerCase(),
+      //.transform((username) => `🔥 ${username} 🔥`)
+      .refine(checkUsername, "No potatoes allowed!")
+      .refine(checkUniqueUsername, "This username is already taken."),
+    email: z
+      .string()
+      .email()
+      .toLowerCase()
+      .refine(
+        checkUniqueEmail,
+        "There is an account already registered with that email.",
+      ),
     password: z
       .string()
       .min(PASSWORD_MIN_LENGTH)
@@ -49,11 +76,14 @@ export const createAccount = async (prevState: any, formData: FormData) => {
     password: formData.get("password"),
     confirm_password: formData.get("confirm_password"),
   };
-  const result = formSchema.safeParse(data);
+  const result = await formSchema.safeParseAsync(data);
 
   if (!result.success) {
     return result.error.flatten();
   } else {
-    console.log(result.data);
+    // hash password
+    // save the user to db using prisma
+    // log the user in
+    // redirect '/home'
   }
 };
