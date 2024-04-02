@@ -9,9 +9,8 @@ import {
   PASSWORD_REGEX_ERROR,
 } from "@/lib/constans";
 import db from "@/lib/db";
-import { getIronSession } from "iron-session";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import getSession from "@/lib/session";
 
 function checkUsername(username: string) {
   return username.includes("potato") ? false : true;
@@ -98,15 +97,11 @@ export const createAccount = async (prevState: any, formData: FormData) => {
       },
     });
 
-    const cookie = await getIronSession(cookies(), {
-      cookieName: "delicious-karrot",
-      password: process.env.COOKIE_PASSWORD!,
-    });
-    // log the user in
-    //@ts-ignore
-    cookie.id = user.id;
-    await cookie.save();
-    // redirect '/home'
+    const session = await getSession();
+
+    session.id = user.id;
+    await session.save();
+
     redirect("/profile");
   }
 };
