@@ -87,7 +87,6 @@ export const createAccount = async (prevState: any, formData: FormData) => {
   const result = await formSchema.spa(data);
 
   if (!result.success) {
-    console.log(result.error.flatten());
     return result.error.flatten();
   } else {
     // hash password
@@ -103,7 +102,7 @@ export const createAccount = async (prevState: any, formData: FormData) => {
 
     const session = await getSession();
 
-    session.id = user.id;
+    session.id = user!.id;
     await session.save();
 
     redirect("/profile");

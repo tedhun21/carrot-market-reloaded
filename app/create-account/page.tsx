@@ -10,7 +10,6 @@ import { PASSWORD_MIN_LENGTH } from "@/lib/constans";
 
 export default function CreateAccount() {
   const [state, dispatch] = useFormState(createAccount, null);
-  console.log(state);
 
   return (
     <div className="flex flex-col gap-10 px-6 py-8">
