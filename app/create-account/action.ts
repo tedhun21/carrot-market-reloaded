@@ -9,6 +9,9 @@ import {
   PASSWORD_REGEX_ERROR,
 } from "@/lib/constans";
 import db from "@/lib/db";
+import { getIronSession } from "iron-session";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 function checkUsername(username: string) {
   return username.includes("potato") ? false : true;
@@ -86,12 +89,24 @@ export const createAccount = async (prevState: any, formData: FormData) => {
   } else {
     // hash password
     const hashedPassword = await bcyrpt.hash(result.data.password, 12);
-    const user = await db.user.create({
-      data: { username: result.data.username },
-    });
-    console.log(user);
     // save the user to db using prisma
+    const user = await db.user.create({
+      data: {
+        username: result.data.username,
+        email: result.data.email,
+        password: hashedPassword,
+      },
+    });
+
+    const cookie = await getIronSession(cookies(), {
+      cookieName: "delicious-karrot",
+      password: process.env.COOKIE_PASSWORD!,
+    });
     // log the user in
+    //@ts-ignore
+    cookie.id = user.id;
+    await cookie.save();
     // redirect '/home'
+    redirect("/profile");
   }
 };
