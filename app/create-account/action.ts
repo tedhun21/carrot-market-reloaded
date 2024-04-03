@@ -11,6 +11,7 @@ import {
 import db from "@/lib/db";
 import { redirect } from "next/navigation";
 import getSession from "@/lib/session";
+import { cookies } from "next/headers";
 
 function checkPasswords({
   password,
@@ -99,9 +100,7 @@ export const createAccount = async (prevState: any, formData: FormData) => {
         password: hashedPassword,
       },
     });
-
     const session = await getSession();
-
     session.id = user!.id;
     await session.save();
 
