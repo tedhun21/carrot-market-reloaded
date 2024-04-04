@@ -1,9 +1,12 @@
 "use server";
 
+import { redirect } from "next/navigation";
+
 import { z } from "zod";
 import validator from "validator";
-import { redirect } from "next/navigation";
 import crypto from "crypto";
+import twilio from "twilio";
+
 import db from "@/lib/db";
 import { LoginSession } from "../github/utils";
 
@@ -84,6 +87,16 @@ export async function smsLogIn(prevState: ActionState, formData: FormData) {
         },
       });
       // send the token using sms
+      const client = twilio(
+        process.env.TWILIO_ACCOUNT_SID,
+        process.env.TWILIO_AUTH_TOKEN,
+      );
+      await client.messages.create({
+        body: `Your Karrot verfication code is: ${token}`,
+        from: process.env.TWILIO_PHONE_NUMBER!,
+        to: process.env.MY_PHONE_NUMBER!,
+        // to: result.data
+      });
 
       return { token: true };
     }
@@ -101,8 +114,6 @@ export async function smsLogIn(prevState: ActionState, formData: FormData) {
 
       await db.sMSToken.delete({ where: { id: token!.id } });
       return LoginSession(token!.userId);
-
-      redirect("/");
     }
   }
 }
