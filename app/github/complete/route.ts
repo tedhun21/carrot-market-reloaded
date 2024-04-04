@@ -1,58 +1,68 @@
 import db from "@/lib/db";
-import getSession from "@/lib/session";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { NextRequest } from "next/server";
+import { LoginSession, getAccessToken, getGithubProfile } from "../utils";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   if (!code) {
     return notFound();
   }
-  const accessTokenParams = new URLSearchParams({
-    client_id: process.env.GITHUB_CLIENT_ID!,
-    client_secret: process.env.GITHUB_CLIENT_SECRET!,
-    code,
-  }).toString();
-  const accessTokenURL = `https://github.com/login/oauth/access_token?${accessTokenParams}`;
-  const accessTokenReseponse = await fetch(accessTokenURL, {
-    method: "POST",
-    headers: { Accept: "application/json" },
-  });
-  const { access_token, token_type, error } = await accessTokenReseponse.json();
+  // 받은 code로 github 토큰 발급
+  const { error, access_token } = await getAccessToken(code);
+
   if (error) {
-    return new Response(null, { status: 400 });
+    return new Response(null, {
+      status: 400,
+    });
   }
 
-  const userProfileResponse = await fetch(`https://api.github.com/user`, {
-    headers: { Authorization: `${token_type} ${access_token}` },
-    cache: "no-cache",
-  });
-  const { id, avatar_url, login } = await userProfileResponse.json();
-  const user = await db.user.findUnique({
+  // 받은 코드로 github 사용자 정보 가져오기
+  const { github_id, avatar, username, email } =
+    await getGithubProfile(access_token);
+
+  const existGithubUser = await db.user.findUnique({
     where: {
-      github_id: id + "",
+      github_id,
     },
     select: {
       id: true,
     },
   });
-  if (user) {
-    const session = await getSession();
-    session.id = user.id;
-    await session.save();
-    return redirect("/profile");
+  // 같은 github_id를 가지고 있다면 -> 바로 로그인
+  if (existGithubUser) {
+    return LoginSession(existGithubUser);
   }
-  const newUser = await db.user.create({
-    data: {
-      github_id: id + "",
-      avatar: avatar_url,
-      username: login,
+  const existUsernameUser = await db.user.findUnique({
+    where: {
+      username,
     },
     select: { id: true },
   });
-
-  const session = await getSession();
-  session.id = newUser.id;
-  await session.save();
-  return redirect("/profile");
+  // 같은 username이 있다면 -> username에 `-gh`를 붙여서 생성
+  if (existUsernameUser) {
+    const newUser = await db.user.create({
+      data: {
+        username: `${username}-gh`,
+        github_id,
+        avatar,
+        email,
+      },
+      select: { id: true },
+    });
+    return LoginSession(newUser);
+  }
+  // 아무것도 안걸리면 그냥 만들기
+  const newUser = await db.user.create({
+    data: {
+      username,
+      github_id,
+      avatar,
+      email,
+    },
+    select: {
+      id: true,
+    },
+  });
+  return LoginSession(newUser);
 }

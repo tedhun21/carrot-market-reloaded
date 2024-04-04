@@ -11,7 +11,6 @@ import {
 import db from "@/lib/db";
 import { redirect } from "next/navigation";
 import getSession from "@/lib/session";
-import { cookies } from "next/headers";
 
 function checkPasswords({
   password,
