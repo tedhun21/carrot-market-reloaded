@@ -7,7 +7,7 @@ import {
   PASSWORD_MIN_LENGTH,
   PASSWORD_REGEX,
   PASSWORD_REGEX_ERROR,
-} from "@/lib/constans";
+} from "@/lib/constants";
 import db from "@/lib/db";
 import { redirect } from "next/navigation";
 import getSession from "@/lib/session";

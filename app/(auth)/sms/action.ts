@@ -9,6 +9,7 @@ import twilio from "twilio";
 
 import db from "@/lib/db";
 import { LoginSession } from "../github/utils";
+import getSession from "@/lib/session";
 
 const phoneSchema = z
   .string()
@@ -56,11 +57,14 @@ export async function smsLogIn(prevState: ActionState, formData: FormData) {
   const phone = formData.get("phone");
   const token = formData.get("token");
 
+  // 이전 입력한 token이 없을 때
   if (!prevState.token) {
     const result = phoneSchema.safeParse(phone);
 
+    // validation 실패
     if (!result.success) {
       return { token: false, error: result.error.flatten() };
+      // validation 성공
     } else {
       // delete previous token
       await db.sMSToken.deleteMany({
@@ -94,25 +98,29 @@ export async function smsLogIn(prevState: ActionState, formData: FormData) {
       await client.messages.create({
         body: `Your Karrot verfication code is: ${token}`,
         from: process.env.TWILIO_PHONE_NUMBER!,
-        to: process.env.MY_PHONE_NUMBER!,
+        // 원래 이걸 받은 전화번호를 써야하지만 체험판은 정해진 자기 번호만 가능하다
         // to: result.data
+        to: process.env.MY_PHONE_NUMBER!,
       });
 
       return { token: true };
     }
+    // 이전 입력한 token이 있을 때 (제출된 토큰이 있으면 유저 찾기)
   } else {
     const result = await tokenSchema.spa(token);
+    // validation 실패
     if (!result.success) {
       return { token: true, error: result.error.flatten() };
+      // validation 성공
     } else {
       // get the userId of token
       const token = await db.sMSToken.findUnique({
         where: { token: result.data.toString() },
         select: { id: true, userId: true },
       });
-      // log the user in
 
       await db.sMSToken.delete({ where: { id: token!.id } });
+      // log the user in
       return LoginSession(token!.userId);
     }
   }
