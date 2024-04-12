@@ -49,9 +49,14 @@ export default async function ProductDetail({
         <Image fill src={product.photo} alt={product.title} />
       </div>
       <div className="flex items-center gap-3 border-b border-neutral-700 p-5">
-        <div className="size-10 rounded-full">
+        <div className="size-10 overflow-hidden rounded-full">
           {product.user.avatar !== null ? (
-            <Image src={product.user.avatar} width={40} height={40} />
+            <Image
+              src={product.user.avatar}
+              width={40}
+              height={40}
+              alt={product.user.username}
+            />
           ) : (
             <UserIcon className="size-10" />
           )}
