@@ -36,6 +36,7 @@ export default async function Products() {
       >
         <PlusIcon className="size-10" />
       </Link>
+      <Link href="/recent">Go to Recent</Link>
     </div>
   );
 }
