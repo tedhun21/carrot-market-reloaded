@@ -8,6 +8,7 @@ import { uploadProduct } from "./action";
 
 export default function AddProduct() {
   const [preview, setPreview] = useState("");
+  const [uploadUrl, setUploadUrl] = useState("");
   const onImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const {
       target: { files },
@@ -15,7 +16,7 @@ export default function AddProduct() {
     if (!files) {
       return;
     }
-    console.log(files);
+
     // 유저가 이미지를 올렸는지 확인할 것
     const file = files[0];
     // 4mb 이하를 올렸는지 확인할 것
