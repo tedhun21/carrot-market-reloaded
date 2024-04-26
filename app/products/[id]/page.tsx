@@ -14,7 +14,7 @@ async function getIsOwner(userId: number) {
   return false;
 }
 
-async function getProduct(id: number) {
+export async function getProduct(id: number) {
   const product = await db.product.findUnique({
     where: { id },
     include: {
