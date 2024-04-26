@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { unstable_cache as nextCache } from "next/cache";
+import { unstable_cache as nextCache, revalidatePath } from "next/cache";
 
 import { Prisma } from "@prisma/client";
 
@@ -7,11 +7,10 @@ import db from "@/lib/db";
 import ProductList from "@/components/product-list";
 import { PlusIcon } from "@heroicons/react/24/solid";
 
-const getCachedProducts = nextCache(getInitialProducts, ["home-products"], {
-  revalidate: 60,
-});
+const getCachedProducts = nextCache(getInitialProducts, ["home-products"]);
 
 async function getInitialProducts() {
+  console.log("hit!!!!");
   const products = await db.product.findMany({
     select: {
       title: true,
@@ -37,9 +36,16 @@ export const metadata = {
 
 export default async function Products() {
   const initialProducts = await getCachedProducts();
+  const revalidate = async () => {
+    "use server";
+    revalidatePath("/home");
+  };
   return (
     <div>
       <ProductList initialProducts={initialProducts} />
+      <form action={revalidate}>
+        <button>Revalidate</button>
+      </form>
       <Link
         href="/products/add"
         className="fixed bottom-24 right-8 flex size-16 items-center justify-center rounded-full bg-orange-500 text-white transition-colors hover:bg-orange-400"
