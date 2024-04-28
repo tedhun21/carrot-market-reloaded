@@ -3,9 +3,24 @@ import Image from "next/image";
 import { PhotoIcon } from "@heroicons/react/24/solid";
 
 import CloseButton from "@/components/close-button";
-import { getProduct } from "@/app/products/[id]/page";
+import db from "@/lib/db";
 import { formatToWon } from "@/lib/utils";
 import LinkImage from "@/components/link-image";
+
+async function getProduct(id: number) {
+  const product = await db.product.findUnique({
+    where: { id },
+    include: {
+      user: {
+        select: {
+          username: true,
+          avatar: true,
+        },
+      },
+    },
+  });
+  return product;
+}
 
 export default async function Modal({ params }: { params: { id: string } }) {
   const product = await getProduct(Number(params.id));
