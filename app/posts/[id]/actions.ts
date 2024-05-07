@@ -21,3 +21,17 @@ export async function dislikePost(postId: number) {
     revalidateTag(`like-status-${postId}`);
   } catch (e) {}
 }
+
+export async function commentPost({
+  postId,
+  payload,
+}: {
+  postId: number;
+  payload: string;
+}) {
+  const session = await getSession();
+  try {
+    await db.comment.create({ data: { postId, userId: session.id!, payload } });
+    revalidateTag(`comments-${postId}`);
+  } catch (e) {}
+}
