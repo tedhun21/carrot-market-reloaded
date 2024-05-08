@@ -1,18 +1,27 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
+import Image from "next/image";
+
 import { InitialChatMessages } from "@/app/chats/[id]/page";
 import { formatToTimeAgo } from "@/lib/utils";
 import { ArrowUpCircleIcon } from "@heroicons/react/24/solid";
-import Image from "next/image";
-import React, { useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const SUPABASE_PUBLIC_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwZnh1eXVsc2tiZmtvcGhpbWlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTUxNzc4ODYsImV4cCI6MjAzMDc1Mzg4Nn0.t5TtPNW8TfO8UoKATSFvMVPhVbXgsBo8PeEWtvESPKE";
+
+const SUPABASE_URL = "https://lpfxuyulskbfkophimis.supabase.co";
 
 interface ChatMessageListProps {
   initialMessages: InitialChatMessages;
   userId: number;
+  chatRoomId: string;
 }
 export default function ChatMessagesList({
   initialMessages,
   userId,
+  chatRoomId,
 }: ChatMessageListProps) {
   const [messages, setMessages] = useState(initialMessages);
   const [message, setMessage] = useState("");
@@ -26,9 +35,29 @@ export default function ChatMessagesList({
 
   const onSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    window.alert(message);
+    setMessages((prevMsgs) => [
+      ...prevMsgs,
+      {
+        id: Date.now(),
+        payload: message,
+        created_at: new Date(),
+        userId,
+        user: {
+          username: "string",
+          avatar: "xxx",
+        },
+      },
+    ]);
     setMessage("");
   };
+  useEffect(() => {
+    const client = createClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY);
+    const channel = client.channel(`room-${chatRoomId}`);
+    channel.on("broadcast", { event: "message" }, (payload) => {
+      console.log(payload);
+    });
+  }, [chatRoomId]);
+
   return (
     <div className="flex min-h-screen flex-col justify-end gap-5 p-5">
       {messages.map((message) => (
@@ -70,7 +99,7 @@ export default function ChatMessagesList({
           placeholder="Wirte a message..."
         />
         <button className="absolute right-0">
-          <ArrowUpCircleIcon className="size-10 text-orange-50 transition-colors hover:text-orange-300" />
+          <ArrowUpCircleIcon className="size-10 text-orange-500 transition-colors hover:text-orange-300" />
         </button>
       </form>
     </div>
