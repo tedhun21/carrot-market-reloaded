@@ -7,6 +7,7 @@ import { InitialChatMessages } from "@/app/chats/[id]/page";
 import { formatToTimeAgo } from "@/lib/utils";
 import { ArrowUpCircleIcon } from "@heroicons/react/24/solid";
 import { RealtimeChannel, createClient } from "@supabase/supabase-js";
+import { saveMessage } from "@/app/chats/[id]/actions";
 
 const SUPABASE_PUBLIC_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwZnh1eXVsc2tiZmtvcGhpbWlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTUxNzc4ODYsImV4cCI6MjAzMDc1Mzg4Nn0.t5TtPNW8TfO8UoKATSFvMVPhVbXgsBo8PeEWtvESPKE";
@@ -38,7 +39,7 @@ export default function ChatMessagesList({
     setMessage(value);
   };
 
-  const onSubmit = (event: React.FormEvent) => {
+  const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setMessages((prevMsgs) => [
       ...prevMsgs,
@@ -64,8 +65,10 @@ export default function ChatMessagesList({
         user: { username, avatar },
       },
     });
+    await saveMessage(message, chatRoomId);
     setMessage("");
   };
+
   useEffect(() => {
     const client = createClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY);
     channel.current = client.channel(`room-${chatRoomId}`);
