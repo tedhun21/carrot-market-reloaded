@@ -41,10 +41,13 @@ model Product {
   price       Float
   description String
   photo       String
+
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
+
   user        User     @relation(fields: [userId], references: [id], onDelete:Cascade)
   userId      Int
+  chat_rooms  ChatRoom[]
 }
 
 model Post {
@@ -91,6 +94,9 @@ model ChatRoom {
   id         String @id @default(cuid())
   users      User[]
   messages   Message[]
+
+  product    Product @relation(fields:[productId],references:[id])
+  productId  Int
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt  

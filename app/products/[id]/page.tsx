@@ -43,6 +43,39 @@ async function getProductTitle(id: number) {
   return product;
 }
 
+async function checkExistingChatRoom({
+  ownerId,
+  customerId,
+  productId,
+}: {
+  ownerId: number;
+  customerId: number;
+  productId: number;
+}) {
+  const existingRoom = await db.chatRoom.findMany({
+    where: {
+      users: {
+        every: {
+          id: {
+            in: [ownerId, customerId],
+          },
+        },
+      },
+      product: { id: productId },
+    },
+    select: { id: true },
+  });
+
+  if (Boolean(existingRoom.length)) {
+    return {
+      exists: Boolean(existingRoom.length),
+      existingRoomId: existingRoom[0].id,
+    };
+  } else {
+    return { exists: Boolean(existingRoom.length) };
+  }
+}
+
 const getCachedProductTitle = nextCache(getProductTitle, ["product-title"], {
   tags: ["product-title"],
 });
@@ -74,16 +107,34 @@ export default async function ProductDetail({
   const createChatRoom = async () => {
     "use server";
     const session = await getSession();
-    const room = await db.chatRoom.create({
-      data: {
-        users: {
-          connect: [{ id: product.userId }, { id: session.id }],
-        },
-      },
-      select: { id: true },
-    });
-    redirect(`/chats/${room.id}`);
+
+    // chat room 정보에 해당하는 있는지
+    if (product.userId && session.id) {
+      const { exists, existingRoomId } = await checkExistingChatRoom({
+        ownerId: product.userId,
+        customerId: session.id,
+        productId: +params.id,
+      });
+
+      if (exists) {
+        redirect(`/chats/${existingRoomId}`);
+      } else if (!exists) {
+        const room = await db.chatRoom.create({
+          data: {
+            users: {
+              connect: [{ id: product.userId }, { id: session.id }],
+            },
+            product: {
+              connect: { id: product.id },
+            },
+          },
+          select: { id: true },
+        });
+        redirect(`/chats/${room.id}`);
+      }
+    }
   };
+
   return (
     <div>
       <div className="relative aspect-square">
